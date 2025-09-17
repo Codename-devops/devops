@@ -1,0 +1,38 @@
+# Name des Workflows, so wird er in GitHub angezeigt
+name: CI
+
+# Wann soll die Pipeline laufen?
+on:
+  push:          # jedes Mal wenn Code gepusht wird
+    branches:    # nur wenn auf "main"-Branch
+      - main
+
+jobs:            # hier definieren wir die Jobs (Backend & Frontend separat)
+
+  backend:       # erster Job = Backend-Check
+    runs-on: ubuntu-latest   # virtuelle Maschine mit Linux
+    steps:                  # einzelne Schritte in der Pipeline
+      - uses: actions/checkout@v3
+        # Holt den Code aus deinem Repo in die VM
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+        # Installiert Python 3.11 in der VM
+
+      - run: echo "✅ Backend checked"
+        # Placeholder (hier würden wir später "pip install" + Tests laufen lassen)
+
+  frontend:      # zweiter Job = Frontend-Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        # Holt auch hier den Code aus deinem Repo
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+        # Installiert Node.js v20 (brauchen wir für Next.js)
+
+      - run: echo "✅ Frontend checked"
+        # Placeholder (später: "npm install && npm run build")
