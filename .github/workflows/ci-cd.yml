@@ -112,6 +112,7 @@ jobs:
         with:
           node-version: 20
           cache: "npm"                              # npm-Cache für schnelleren Build
+          cache-dependency-path: frontend/package-lock.json   # <— wichtig!
 
       # --- Kurze Commit-ID (wie oben) ---
       - name: Short commit SHA
