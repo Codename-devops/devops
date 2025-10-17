@@ -1,29 +1,31 @@
 # =======================================================
-#  🚀 CI/CD Workflow für deine InvoiceApp
-#  - Backend (FastAPI)
-#  - Frontend (React/Next.js)
-#  - Deployment nach K3s (Hetzner)
+# 🚀 CI/CD Pipeline für die InvoiceApp
+# =======================================================
+# Diese Datei steuert alles:
+#  - Test & Build vom Backend (FastAPI)
+#  - Test & Build vom Frontend (React/Next.js)
+#  - Deployment zum Kubernetes-Cluster (K3s auf Hetzner)
 # =======================================================
 
 name: CI/CD Pipeline
 
 # -----------------------------------------------
-# 🕓 Wann soll die Pipeline laufen?
+# 🕓 Wann soll die Pipeline starten?
 # -----------------------------------------------
+# -> Bei jedem Push oder Pull Request auf den Branch "main"
 on:
   push:
-    branches: [ "main" ]     # bei jedem Push auf "main"
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]     # oder wenn ein Pull Request kommt
+    branches: [ "main" ]
 
 # -----------------------------------------------
-# ⚙️ Globale Variablen (kannst du oben zentral ändern)
+# ⚙️ Globale Variablen (für alle Jobs verfügbar)
 # -----------------------------------------------
 env:
-  REGISTRY: docker.io
-  IMAGE_BACKEND: hakkibate/invoice-backend
-  IMAGE_FRONTEND: hakkibate/invoice-frontend
-  SHORT_SHA: ${{ github.sha }}
+  REGISTRY: docker.io                               # Docker-Registry (Docker Hub)
+  IMAGE_BACKEND: hakkibate/invoice-backend          # Name des Backend-Images
+  IMAGE_FRONTEND: hakkibate/invoice-frontend        # Name des Frontend-Images
 
 # -----------------------------------------------
 # 🧠 Job 1: Backend (FastAPI)
@@ -31,93 +33,113 @@ env:
 jobs:
   backend:
     name: Backend – Test & Build
-    runs-on: ubuntu-latest     # GitHub startet eine Linux-VM
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      # --- Code ins System holen ---
-      - uses: actions/checkout@v4
-        # lädt dein Repository-Code in die VM
+    runs-on: ubuntu-latest    # GitHub erstellt eine frische Linux-VM für den Job
 
-      # --- Python installieren ---
+    steps:
+      # --- Code aus dem GitHub-Repo in die VM laden ---
+      - uses: actions/checkout@v4
+
+      # --- Verzeichnis anzeigen (zum Debuggen bei Pfadfehlern) ---
+      - name: Show repo tree
+        run: |
+          pwd && ls -la
+          echo "---- backend ----"
+          ls -la backend || true
+
+      # --- Python installieren (Version 3.11) ---
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Use venv
+
+      # --- Kurze GitHub Commit-ID generieren (z.B. abc1234) ---
+      - name: Short commit SHA
+        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
+      # --- Virtuelle Umgebung erstellen und Python-Pakete installieren ---
+      # Dadurch bleiben System-Pakete unangetastet (PEP 668-Schutz)
+      - name: Install backend deps (venv)
         run: |
-          python -m venv .venv
+          python -m venv .venv                       # Neues virtuelles Python-Environment
+          source .venv/bin/activate                  # Aktivieren der venv
+          python -m pip install -U pip               # pip aktualisieren
+          pip install -r backend/requirements.txt    # Dependencies installieren
+
+      # --- Tests ausführen (falls keine da: kein Abbruch) ---
+      - name: Backend tests
+        run: |
           source .venv/bin/activate
-          python -m pip install -U pip
-          pip install -r backend/requirements.txt
+          pytest -q || true                          # "|| true" = Fehler ignorieren (weiterlaufen)
 
-
-      # --- Python-Pakete installieren ---
-      - name: Abhängigkeiten installieren
-        run: pip install -r backend/requirements.txt
-
-      # --- Tests ausführen (optional) ---
-      - name: Backend testen
-        run: pytest -q || true
-        # "|| true" = auch wenn keine Tests existieren, weiterlaufen
-
-      # --- Login bei Docker Hub ---
-      - name: Docker Login
+      # --- Docker Login ---
+      # Verwendet GitHub Secrets (DOCKERHUB_USERNAME + DOCKERHUB_TOKEN)
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # --- Docker-Image bauen & pushen ---
-      - name: Docker Image bauen & pushen
+      # --- Docker-Image bauen und zu Docker Hub pushen ---
+      - name: Build & push backend image
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
-          push: true
-          tags: |
-            ${{ env.IMAGE_BACKEND }}:latest
-            ${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }}
+          context: ./backend                         # Ordner mit Dockerfile
+          push: true                                 # Nach Docker Hub hochladen
+          tags: |                                   # Zwei Versionen taggen:
+            ${{ env.IMAGE_BACKEND }}:latest          # 1️⃣ immer „latest“
+            ${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }}  # 2️⃣ Commit-ID als Version
 
-# -----------------------------------------------
-# 🖥️ Job 2: Frontend (React/Next.js)
-# -----------------------------------------------
+  # -----------------------------------------------
+  # 🖥️ Job 2: Frontend (React/Next.js)
+  # -----------------------------------------------
   frontend:
     name: Frontend – Test & Build
     runs-on: ubuntu-latest
 
     steps:
-      # --- Code holen ---
+      # --- Code laden ---
       - uses: actions/checkout@v4
 
-      # --- Node.js installieren ---
+      # --- Ordnerstruktur anzeigen (Debug) ---
+      - name: Show repo tree
+        run: |
+          pwd && ls -la
+          echo "---- frontend ----"
+          ls -la frontend || true
+
+      # --- Node.js installieren (Version 20) ---
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"                              # npm-Cache für schnelleren Build
 
-      # --- npm Abhängigkeiten installieren ---
-      - name: Abhängigkeiten installieren
-        run: pip install -r backend/requirements.txt
+      # --- Kurze Commit-ID (wie oben) ---
+      - name: Short commit SHA
+        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
+      # --- npm-Pakete installieren ---
+      - name: Install frontend deps
+        run: npm ci                                 # „ci“ = saubere Neuinstallation
         working-directory: frontend
 
-      # --- Build starten ---
-      - name: Frontend bauen
+      # --- Build ausführen ---
+      - name: Build frontend
         run: npm run build
         working-directory: frontend
 
       # --- Tests (optional) ---
-      - name: Frontend testen
+      - name: Frontend tests
         run: npm test --if-present || true
         working-directory: frontend
 
-      # --- Login bei Docker Hub ---
-      - name: Docker Login
+      # --- Docker Login ---
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # --- Docker-Image bauen & pushen ---
-      - name: Docker Image bauen & pushen
+      # --- Docker Image bauen & pushen ---
+      - name: Build & push frontend image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
@@ -126,41 +148,39 @@ jobs:
             ${{ env.IMAGE_FRONTEND }}:latest
             ${{ env.IMAGE_FRONTEND }}:${{ env.SHORT_SHA }}
 
-# -----------------------------------------------
-# ☸️ Job 3: Deployment auf Kubernetes (K3s)
-# -----------------------------------------------
+  # -----------------------------------------------
+  # ☸️ Job 3: Deployment auf Kubernetes (K3s)
+  # -----------------------------------------------
   deploy:
     name: Deploy to K3s (Hetzner)
-    needs: [ backend, frontend ]      # erst wenn beide Images fertig sind
+    needs: [ backend, frontend ]      # Wird erst ausgeführt, wenn BE + FE fertig sind
     runs-on: ubuntu-latest
 
     steps:
-      # --- Repo holen (wegen YAML-Dateien) ---
+      # --- Code laden (für k8s-YAML-Dateien) ---
       - uses: actions/checkout@v4
 
       # --- kubectl installieren ---
-      - name: kubectl installieren
+      - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
           version: 'v1.34.0'
 
-      # --- kubeconfig schreiben ---
-      - name: kubeconfig schreiben
-        run: |
-          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
-        # lädt deine Kubernetes-Verbindungsdatei aus GitHub Secrets
+      # --- Kubernetes-Zugangsdaten aus GitHub Secrets schreiben ---
+      - name: Write kubeconfig
+        run: echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
 
-      # --- Deployments & Services ausrollen ---
-      - name: Deployments aktualisieren
+      # --- Deployments anwenden & neue Images setzen ---
+      - name: Apply manifests & update images
         env:
           KUBECONFIG: kubeconfig
         run: |
-          kubectl apply -f k8s/         # erstellt oder aktualisiert alle YAMLs im "k8s"-Ordner
-          kubectl set image deployment/invoice-backend backend=${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }} || true
-          kubectl set image deployment/invoice-frontend frontend=${{ env.IMAGE_FRONTEND }}:${{ env.SHORT_SHA }} || true
+          kubectl apply -f k8s/                                  # wendet alle YAML-Dateien im Ordner an
+          kubectl set image deployment/invoice-backend backend=${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }} --namespace default || true
+          kubectl set image deployment/invoice-frontend frontend=${{ env.IMAGE_FRONTEND }}:${{ env.SHORT_SHA }} --namespace default || true
 
-      # --- Rollout prüfen ---
-      - name: Rollout überprüfen
+      # --- Rollout prüfen (ob Pods erfolgreich gestartet sind) ---
+      - name: Check rollout status
         env:
           KUBECONFIG: kubeconfig
         run: |
