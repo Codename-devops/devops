@@ -1,0 +1,8 @@
+{
+  "name": "invoice-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'Build frontend placeholder...'; mkdir -p dist",
+    "test": "echo 'No tests yet...'"
+  }
+}
