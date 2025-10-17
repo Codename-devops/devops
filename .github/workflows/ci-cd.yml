@@ -23,7 +23,7 @@ env:
   REGISTRY: docker.io
   IMAGE_BACKEND: mydockeruser/invoice-backend
   IMAGE_FRONTEND: mydockeruser/invoice-frontend
-  SHORT_SHA: ${{ github.sha.substr(0,7) }}
+  SHORT_SHA: ${{ github.sha }}
 
 # -----------------------------------------------
 # 🧠 Job 1: Backend (FastAPI)
