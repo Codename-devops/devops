@@ -32,7 +32,9 @@ jobs:
   backend:
     name: Backend – Test & Build
     runs-on: ubuntu-latest     # GitHub startet eine Linux-VM
-
+    defaults:
+      run:
+        working-directory: backend
     steps:
       # --- Code ins System holen ---
       - uses: actions/checkout@v4
