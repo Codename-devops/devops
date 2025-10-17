@@ -21,8 +21,8 @@ on:
 # -----------------------------------------------
 env:
   REGISTRY: docker.io
-  IMAGE_BACKEND: mydockeruser/invoice-backend
-  IMAGE_FRONTEND: mydockeruser/invoice-frontend
+  IMAGE_BACKEND: hakkibate/invoice-backend
+  IMAGE_FRONTEND: hakkibate/invoice-frontend
   SHORT_SHA: ${{ github.sha }}
 
 # -----------------------------------------------
