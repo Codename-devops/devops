@@ -87,7 +87,7 @@ jobs:
 
       # --- npm Abhängigkeiten installieren ---
       - name: Abhängigkeiten installieren
-        run: npm ci
+        run: pip install -r backend/requirements.txt
         working-directory: frontend
 
       # --- Build starten ---
