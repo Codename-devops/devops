@@ -1,0 +1,45 @@
+# --- Python / FastAPI ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.env
+.venv/
+venv/
+ENV/
+*.log
+
+# --- Node.js / React / Next.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+build/
+.next/
+out/
+.cache/
+
+# --- Docker ---
+*.pid
+*.sock
+*.tar
+*.img
+*.tmp
+.dockerignore
+
+# --- VS Code / IDE ---
+.vscode/
+.idea/
+*.swp
+
+# --- Systemdateien ---
+.DS_Store
+Thumbs.db
+
+# --- GitHub Actions Cache / Workflows ---
+*.bak
+*.tmp
+*.lock
