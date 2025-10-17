@@ -82,11 +82,12 @@ jobs:
       - name: Build & push backend image
         uses: docker/build-push-action@v6
         with:
-          context: ./backend                         # Ordner mit Dockerfile
-          push: true                                 # Nach Docker Hub hochladen
-          tags: |                                   # Zwei Versionen taggen:
-            ${{ env.IMAGE_BACKEND }}:latest          # 1️⃣ immer „latest“
-            ${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }}  # 2️⃣ Commit-ID als Version
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.IMAGE_BACKEND }}:latest
+            ${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }}
+
 
   # -----------------------------------------------
   # 🖥️ Job 2: Frontend (React/Next.js)
