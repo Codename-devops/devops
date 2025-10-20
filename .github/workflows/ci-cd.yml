@@ -170,7 +170,7 @@ jobs:
 
       # --- Kubernetes-Zugangsdaten aus GitHub Secrets schreiben ---
       - name: Write kubeconfig (raw)
-        run: echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+        run: printf '%s' "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
       
       - name: Test cluster connection
         env:
