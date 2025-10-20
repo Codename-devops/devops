@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invoice-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: invoice-frontend
+  template:
+    metadata:
+      labels:
+        app: invoice-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: hakkibate/invoice-frontend:latest
+        ports:
+        - containerPort: 3000
