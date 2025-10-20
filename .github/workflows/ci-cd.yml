@@ -171,6 +171,14 @@ jobs:
       # --- Kubernetes-Zugangsdaten aus GitHub Secrets schreiben ---
       - name: Write kubeconfig (raw)
         run: echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+      
+      - name: Test cluster connection
+        env:
+          KUBECONFIG: kubeconfig
+        run: |
+          echo "🌍 Checking cluster connection..."
+          kubectl cluster-info || (echo "❌ Verbindung fehlgeschlagen!" && exit 1)
+          echo "✅ Verbindung erfolgreich!"
 
       # --- Deployments anwenden & neue Images setzen ---
       - name: Apply manifests & update images
