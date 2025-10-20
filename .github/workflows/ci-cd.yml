@@ -169,8 +169,9 @@ jobs:
           version: 'v1.34.0'
 
       # --- Kubernetes-Zugangsdaten aus GitHub Secrets schreiben ---
-      - name: Write kubeconfig (raw)
-        run: printf '%s' "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+      - name: Write kubeconfig (decoded)
+        run: echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
+
 
       - name: Debug kubeconfig content
         run: |
