@@ -171,6 +171,13 @@ jobs:
       # --- Kubernetes-Zugangsdaten aus GitHub Secrets schreiben ---
       - name: Write kubeconfig (raw)
         run: printf '%s' "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+
+      - name: Debug kubeconfig content
+        run: |
+          echo "----- kubeconfig preview -----"
+          head -n 5 kubeconfig
+          echo "------------------------------"
+
       
       - name: Test cluster connection
         env:
