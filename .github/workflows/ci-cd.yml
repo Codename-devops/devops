@@ -172,6 +172,12 @@ jobs:
       - name: Write kubeconfig (decoded)
         run: echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
 
+      - name: Write kubeconfig (raw)
+        run: |
+          printf '%s' "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
+          dos2unix kubeconfig || sed -i 's/\r$//' kubeconfig
+
+
 
       - name: Debug kubeconfig content
         run: |
