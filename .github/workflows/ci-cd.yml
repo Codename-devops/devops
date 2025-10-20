@@ -120,7 +120,7 @@ jobs:
 
       # --- npm-Pakete installieren ---
       - name: Install frontend deps
-        run: npm ci                                 # „ci“ = saubere Neuinstallation
+        run: npm ci --verbose                                 # „ci“ = saubere Neuinstallation
         working-directory: frontend
 
       # --- Build ausführen ---
