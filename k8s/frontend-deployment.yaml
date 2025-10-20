@@ -1,9 +1,16 @@
+# =====================================================
+# 💻 Kubernetes Deployment für das Frontend (React/Next.js)
+# =====================================================
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: invoice-frontend
+  name: invoice-frontend          # Name des Deployments
+  labels:
+    app: invoice-frontend
+
 spec:
-  replicas: 1
+  replicas: 1                     # Eine Instanz reicht für den Anfang
   selector:
     matchLabels:
       app: invoice-frontend
@@ -13,7 +20,10 @@ spec:
         app: invoice-frontend
     spec:
       containers:
-      - name: frontend
-        image: hakkibate/invoice-frontend:latest
-        ports:
-        - containerPort: 3000
+        - name: frontend
+          image: hakkibate/invoice-frontend:latest   # Frontend-Image aus Docker Hub
+          ports:
+            - containerPort: 3000                    # Port, auf dem Next.js läuft
+          env:
+            - name: NODE_ENV
+              value: "production"

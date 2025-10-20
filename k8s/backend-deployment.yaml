@@ -1,19 +1,29 @@
-apiVersion: apps/v1
-kind: Deployment
+# =====================================================
+# 🚀 Kubernetes Deployment für das Backend (FastAPI)
+# =====================================================
+
+apiVersion: apps/v1             # Version der Kubernetes API für Deployments
+kind: Deployment                # Wir erstellen ein Deployment-Objekt
 metadata:
-  name: invoice-backend
+  name: invoice-backend         # Der Name des Deployments (muss eindeutig sein)
+  labels:                       # Labels helfen, Ressourcen zu gruppieren
+    app: invoice-backend
+
 spec:
-  replicas: 1
-  selector:
+  replicas: 1                   # Anzahl der Pods, die gleichzeitig laufen sollen
+  selector:                     # Auswahlregel, welche Pods zu diesem Deployment gehören
     matchLabels:
       app: invoice-backend
-  template:
+  template:                     # Vorlage, wie jeder Pod aussehen soll
     metadata:
       labels:
-        app: invoice-backend
+        app: invoice-backend     # Dieses Label muss mit dem Selector übereinstimmen
     spec:
-      containers:
-      - name: backend
-        image: hakkibate/invoice-backend:latest
-        ports:
-        - containerPort: 8080
+      containers:                # Liste der Container, die im Pod laufen
+        - name: backend          # Name des Containers
+          image: hakkibate/invoice-backend:latest   # Image aus Docker Hub
+          ports:
+            - containerPort: 8080                   # Port, auf dem FastAPI im Container läuft
+          env:                                     # (optional) Umgebungsvariablen
+            - name: ENV
+              value: "production"

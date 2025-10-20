@@ -1,11 +1,18 @@
+# =====================================================
+# 🌐 Kubernetes Service zum Verbinden von Frontend & Backend
+# =====================================================
+# Services stellen sicher, dass Pods über stabile IPs & DNS erreichbar sind
+# und (optional) von außen erreichbar gemacht werden können.
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: invoice-service
+  name: invoice-service               # Name des Services
 spec:
+  type: LoadBalancer                  # Exponiert die App nach außen (Hetzner Load Balancer)
   selector:
-    app: invoice-frontend
+    app: invoice-frontend             # Wählt alle Pods mit diesem Label (Frontend)
   ports:
-    - port: 80
-      targetPort: 3000
-  type: LoadBalancer
+    - name: http
+      port: 80                        # Öffentlicher Port (außen sichtbar)
+      targetPort: 3000                # Leitet Traffic an Container-Port des Frontends
