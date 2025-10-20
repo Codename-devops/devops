@@ -169,8 +169,8 @@ jobs:
           version: 'v1.34.0'
 
       # --- Kubernetes-Zugangsdaten aus GitHub Secrets schreiben ---
-      - name: Write kubeconfig
-        run: echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
+      - name: Write kubeconfig (raw)
+        run: echo "${{ secrets.KUBECONFIG_RAW }}" > kubeconfig
 
       # --- Deployments anwenden & neue Images setzen ---
       - name: Apply manifests & update images
