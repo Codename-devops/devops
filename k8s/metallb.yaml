@@ -1,0 +1,98 @@
+# =======================================================
+# ⚙️ METALLB KONFIGURATION FÜR HETZNER-K3s
+# =======================================================
+# MetalLB ist ein LoadBalancer-Controller für "bare metal"-Kubernetes-Cluster.
+# Er sorgt dafür, dass Services vom Typ LoadBalancer eine externe IP bekommen,
+# auch wenn du NICHT in AWS/GCP bist (z. B. Hetzner, dedizierter Server, o.ä.)
+#
+# 👉 Voraussetzungen:
+# - Du hast deine Hetzner-IP (z. B. 91.98.120.205)
+# - K3s läuft und kubectl funktioniert
+# =======================================================
+
+# 1️⃣ MetalLB selbst installieren (Namespace, Controller, Speaker)
+#    Diese Manifest-Datei legt die Basis-Deployments an
+#    und sorgt dafür, dass MetalLB im Namespace "metallb-system" läuft.
+#    Du kannst diesen Schritt auch manuell mit `kubectl apply -f` machen,
+#    falls du ihn noch nicht ausgeführt hast.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: metallb-system
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metallb-controller
+  namespace: metallb-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: controller
+  template:
+    metadata:
+      labels:
+        component: controller
+    spec:
+      containers:
+        - name: controller
+          image: quay.io/metallb/controller:v0.13.10
+          args:
+            - --port=7472
+            - --metrics-port=7473
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: metallb-speaker
+  namespace: metallb-system
+spec:
+  selector:
+    matchLabels:
+      component: speaker
+  template:
+    metadata:
+      labels:
+        component: speaker
+    spec:
+      containers:
+        - name: speaker
+          image: quay.io/metallb/speaker:v0.13.10
+          args:
+            - --port=7472
+            - --metrics-port=7473
+          securityContext:
+            privileged: true
+      hostNetwork: true
+      serviceAccountName: metallb-speaker
+
+# =======================================================
+# 2️⃣ IPAddressPool:
+#    Definiert, welche IP-Adressen MetalLB verwenden darf.
+#    In diesem Fall verwenden wir nur DEINE Hetzner-IP.
+# =======================================================
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: my-ip-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 91.98.120.205-91.98.120.205   # <-- Deine Hetzner-Server-IP
+
+# =======================================================
+# 3️⃣ L2Advertisement:
+#    Gibt an, wie MetalLB IP-Adressen im lokalen Netzwerk verteilt.
+#    "Layer2" bedeutet, dass MetalLB IPs direkt über das Hostnetzwerk ankündigt.
+# =======================================================
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: l2adv
+  namespace: metallb-system
