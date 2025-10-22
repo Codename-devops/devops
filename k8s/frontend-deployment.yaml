@@ -25,5 +25,5 @@ spec:
           ports:
             - containerPort: 3000                    # Port, auf dem Next.js läuft
           env:
-            - name: NODE_ENV
-              value: "production"
+            - name: Next_PUPLIC_API_URL               # Frontend soll Backend kennen
+              value: "http://invoice-backend-service:8000"

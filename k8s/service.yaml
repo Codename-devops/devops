@@ -16,3 +16,18 @@ spec:
     - name: http
       port: 80                        # Öffentlicher Port (außen sichtbar)
       targetPort: 3000                # Leitet Traffic an Container-Port des Frontends
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: invoice-backend-service      # Name des Backend-Service
+spec:
+  type: ClusterIP                    # nur intern erreichbar (vom Frontend aus)
+  selector:
+    app: invoice-backend             # muss mit labels aus backend-deployment.yaml übereinstimmen
+  ports:
+    - protocol: TCP
+      port: 8000                     # Port für FastAPI
+      targetPort: 8000               # Container-Port für FastAPI

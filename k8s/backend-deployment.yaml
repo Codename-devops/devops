@@ -20,10 +20,7 @@ spec:
         app: invoice-backend     # Dieses Label muss mit dem Selector übereinstimmen
     spec:
       containers:                # Liste der Container, die im Pod laufen
-        - name: backend          # Name des Containers
+        - name: invoice-backedn          # Name des Containers
           image: hakkibate/invoice-backend:latest   # Image aus Docker Hub
           ports:
             - containerPort: 8080                   # Port, auf dem FastAPI im Container läuft
-          env:                                     # (optional) Umgebungsvariablen
-            - name: ENV
-              value: "production"
