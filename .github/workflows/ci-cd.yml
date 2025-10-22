@@ -193,7 +193,7 @@ jobs:
         env:
           KUBECONFIG: kubeconfig
         run: |
-          kubectl apply -f k8s/ --validate=false                                  # wendet alle YAML-Dateien im Ordner an
+          kubectl apply -f k8s/ --validate=false --prune=false --selector '!component=metallb'              # wendet alle YAML-Dateien im Ordner an auser metellb
           kubectl set image deployment/invoice-backend backend=${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }} --namespace default || true
           kubectl set image deployment/invoice-frontend frontend=${{ env.IMAGE_FRONTEND }}:${{ env.SHORT_SHA }} --namespace default || true
 
