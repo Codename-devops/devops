@@ -172,10 +172,15 @@ jobs:
         with:
           version: 'v1.34.0'
 
-      # --- 🔐 kubeconfig aus Secret laden ---
+      # --- 🔐 kubeconfig aus Secret schreiben ---
       - name: Write kubeconfig
         run: |
+          echo "📦 Writing kubeconfig from Base64 secret..."
           echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
+
+          echo "✅ kubeconfig written. Preview:"
+          head -n 5 kubeconfig
+
 
       # --- 🧩 Manifeste anwenden (nur Deployments & Services, kein MetalLB!) ---
       - name: Apply manifests & update images
