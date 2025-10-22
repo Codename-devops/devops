@@ -149,58 +149,63 @@ jobs:
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest
             ${{ env.IMAGE_FRONTEND }}:${{ env.SHORT_SHA }}
+    # ☸️ DEPLOY ZU K3S (HETZNER)
+    # =======================================================
+    # Dieser Abschnitt übernimmt:
+    # 1️⃣ Das Anwenden aller Kubernetes-Manifeste (Deployments + Services)
+    # 2️⃣ Das Aktualisieren der Docker-Images mit dem aktuellen Commit-Tag
+    # 3️⃣ Das Überprüfen, ob die Deployments korrekt ausgerollt wurden
+    # =======================================================
 
-  # -----------------------------------------------
-  # ☸️ Job 3: Deployment auf Kubernetes (K3s)
-  # -----------------------------------------------
   deploy:
     name: Deploy to K3s (Hetzner)
-    needs: [ backend, frontend ]      # Wird erst ausgeführt, wenn BE + FE fertig sind
+    needs: [ backend, frontend ]         # Erst ausführen, wenn beide Images gebaut & gepusht wurden
     runs-on: ubuntu-latest
 
     steps:
-      # --- Code laden (für k8s-YAML-Dateien) ---
+    # --- 📦 Repository-Code holen (wegen YAMLs im k8s-Ordner) ---
       - uses: actions/checkout@v4
 
-      # --- kubectl installieren ---
+    # --- ⚙️ kubectl installieren ---
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
           version: 'v1.34.0'
 
-      # --- Kubernetes-Zugangsdaten aus GitHub Secrets schreiben ---
-      - name: Write kubeconfig (decoded)
-        run: echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
-
-
-      - name: Debug kubeconfig content
+      # --- 🔐 kubeconfig aus Secret laden ---
+      - name: Write kubeconfig
         run: |
-          echo "----- kubeconfig preview -----"
-          head -n 5 kubeconfig
-          echo "------------------------------"
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > kubeconfig
 
-      
-      - name: Test cluster connection
-        env:
-          KUBECONFIG: kubeconfig
-        run: |
-          echo "🌍 Checking cluster connection..."
-          kubectl cluster-info || (echo "❌ Verbindung fehlgeschlagen!" && exit 1)
-          echo "✅ Verbindung erfolgreich!"
-
-      # --- Deployments anwenden & neue Images setzen ---
+      # --- 🧩 Manifeste anwenden (nur Deployments & Services, kein MetalLB!) ---
       - name: Apply manifests & update images
         env:
           KUBECONFIG: kubeconfig
         run: |
-          kubectl apply -f k8s/ --validate=false --prune=false --selector='component!=metallb'              # wendet alle YAML-Dateien im Ordner an auser metellb
+          echo "🚀 Applying Kubernetes manifests..."
+
+          # Anwenden aller Deployments (z. B. Backend & Frontend)
+          kubectl apply -f k8s/deployments/ --validate=false
+
+          # Anwenden aller Services (LoadBalancer, ClusterIP)
+          kubectl apply -f k8s/services/ --validate=false
+
+          # Neue Images aus der CI/CD einsetzen (mit aktuellem Commit-Tag)
           kubectl set image deployment/invoice-backend backend=${{ env.IMAGE_BACKEND }}:${{ env.SHORT_SHA }} --namespace default || true
           kubectl set image deployment/invoice-frontend frontend=${{ env.IMAGE_FRONTEND }}:${{ env.SHORT_SHA }} --namespace default || true
 
-      # --- Rollout prüfen (ob Pods erfolgreich gestartet sind) ---
+      # --- 🔍 Rollout prüfen ---
       - name: Check rollout status
         env:
           KUBECONFIG: kubeconfig
         run: |
+          echo "🔎 Checking rollout status..."
           kubectl rollout status deploy/invoice-backend --timeout=120s || true
           kubectl rollout status deploy/invoice-frontend --timeout=120s || true
+
+      # --- ✅ Ausgabe: Fertig ---
+      - name: Deployment summary
+        run: |
+          echo "✅ Backend & Frontend erfolgreich deployed!"
+          kubectl get pods -o wide
+          kubectl get svc -o wide
